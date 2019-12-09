@@ -27,7 +27,11 @@ module Sql::Crystallizer
     end
 
     rule(:derived_column) do
-      identifier
+      identifier >> (space >> as_clause).maybe
+    end
+
+    rule(:as_clause) do
+      (match(/as/i) >> space).maybe >> identifier
     end
 
     rule(:table_expression) do
@@ -36,7 +40,7 @@ module Sql::Crystallizer
 
 
     rule(:comma) { match(/\s*,\s*/) }
-    rule(:identifier) { match(/"[^"]+"/) | match(/[A-Za-z]\w+/) }
+    rule(:identifier) { match(/"[^"]+"/) | match(/[A-Za-z]\w+/) | match(/\d+/)}
     rule(:space) { match(/\s+/) }
     rule(:space?) { match(/\s*/) }
 
