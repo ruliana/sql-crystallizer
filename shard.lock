@@ -1,0 +1,10 @@
+version: 1.0
+shards:
+  ameba:
+    github: crystal-ameba/ameba
+    version: 0.11.0
+
+  lingo:
+    github: rmosolgo/lingo
+    commit: 2c091c352df904dd16efe777c0ace1a27e2cebde
+
