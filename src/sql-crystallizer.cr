@@ -7,50 +7,50 @@ module Sql::Crystallizer
     rule(:space) { match(/\s+/) }
     rule(:select_statement) { str("select") }
 
-    rule(:field_alias) {
+    rule(:field_alias) do
       match(/\w+/).named(:alias)
-    }
+    end
 
-    rule(:field_raw) {
+    rule(:field_raw) do
       match(/\w+/).named(:field)
-    }
+    end
 
-    rule(:field_missing_as) {
+    rule(:field_missing_as) do
       field_raw >> space >> field_alias
-    }
+    end
 
-    rule(:field_as) {
+    rule(:field_as) do
       field_raw >>
         space >>
         str("as") >>
         space >>
         field_alias
-    }
+    end
 
-    rule(:field_eq) {
+    rule(:field_eq) do
       field_alias >>
         space >>
         str("=") >>
         space >>
         field_raw
-    }
+    end
 
-    rule(:field) {
+    rule(:field) do
       (field_eq | field_as | field_missing_as | field_raw).named(:column)
-    }
+    end
 
-    rule(:fields) {
+    rule(:fields) do
       field >> (space.maybe>>
                 str(",") >>
                 space.maybe >>
                 fields).repeat(0)
-    }
+    end
 
-    rule(:projection) {
+    rule(:projection) do
       select_statement.named(:select) >>
         space >>
         fields
-    }
+    end
 
     root(:projection)
   end
@@ -114,17 +114,17 @@ module Sql::Crystallizer
     getter rslt = Query.new
     property current_column : Column = EMPTY_COLUMN
 
-    enter(:field) {
+    enter(:field) do
       visitor.current_column = visitor.current_column.named(node.full_value)
-    }
+    end
 
-    enter(:alias) {
+    enter(:alias) do
       visitor.current_column = visitor.current_column.aliased(node.full_value)
-    }
+    end
 
-    exit(:column) {
+    exit(:column) do
       visitor.rslt.columns << visitor.current_column
       visitor.current_column = EMPTY_COLUMN
-    }
+    end
   end
 end
