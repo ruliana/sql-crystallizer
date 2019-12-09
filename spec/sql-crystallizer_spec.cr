@@ -27,6 +27,34 @@ module Sql::Crystallizer
       it "with (=) equal" do
         Assert.transform("select test = 1", "select 1 as test")
       end
+
+      it "on multiple lines" do
+        Assert.transform("select\n1\n    as    test", "select 1 as test")
+      end
+    end
+
+    describe "functions" do
+      it "simple" do
+        Assert.transform("select now()", "select now()")
+        Assert.transform("select greatest(some_field)", "select greatest(some_field)")
+        Assert.transform("select greatest(1, some_field, 1)", "select greatest(1, some_field, 1)")
+      end
+
+      it "binary" do
+      end
+
+      it "nested" do
+      end
+
+      it "in" do
+      end
+
+      it "between" do
+      end
+
+      it "case when" do
+      end
+
     end
   end
 end

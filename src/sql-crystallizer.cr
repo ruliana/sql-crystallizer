@@ -4,55 +4,43 @@ module Sql::Crystallizer
   VERSION = "0.1.0"
 
   class QueryParser < Lingo::Parser
+    rule(:query_specification) do
+      match(/select/i) >>
+        space >>
+        (set_quantifier >> space).maybe >>
+        select_list >>
+        (space >> table_expression).maybe
+    end
+
+    rule(:set_quantifier) { match(/distinct/i) | match(/all/i) }
+
+    rule(:select_list) do
+      str("*") | (select_sublist >> (comma >> select_sublist).repeat(0))
+    end
+
+    rule(:select_sublist) do
+      derived_column | qualified_asterisk
+    end
+
+    rule(:qualified_asterisk) do
+      (identifier >> str(".")).repeat >> str("*")
+    end
+
+    rule(:derived_column) do
+      identifier
+    end
+
+    rule(:table_expression) do
+      str("")
+    end
+
+
+    rule(:comma) { match(/\s*,\s*/) }
+    rule(:identifier) { match(/"[^"]+"/) | match(/[A-Za-z]\w+/) }
     rule(:space) { match(/\s+/) }
-    rule(:select_statement) { str("select") }
+    rule(:space?) { match(/\s*/) }
 
-    rule(:field_alias) do
-      match(/\w+/).named(:alias)
-    end
-
-    rule(:field_raw) do
-      match(/\w+/).named(:field)
-    end
-
-    rule(:field_missing_as) do
-      field_raw >> space >> field_alias
-    end
-
-    rule(:field_as) do
-      field_raw >>
-        space >>
-        str("as") >>
-        space >>
-        field_alias
-    end
-
-    rule(:field_eq) do
-      field_alias >>
-        space >>
-        str("=") >>
-        space >>
-        field_raw
-    end
-
-    rule(:field) do
-      (field_eq | field_as | field_missing_as | field_raw).named(:column)
-    end
-
-    rule(:fields) do
-      field >> (space.maybe>>
-                str(",") >>
-                space.maybe >>
-                fields).repeat(0)
-    end
-
-    rule(:projection) do
-      select_statement.named(:select) >>
-        space >>
-        fields
-    end
-
-    root(:projection)
+    root(:query_specification)
   end
 
   struct NilColumn
