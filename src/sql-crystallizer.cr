@@ -7,28 +7,36 @@ module Sql::Crystallizer
     rule(:space) { match(/\s+/) }
     rule(:select_statement) { str("select") }
 
+    rule(:field_alias) {
+      match(/\w+/).named(:alias)
+    }
+
     rule(:field_raw) {
       match(/\w+/).named(:field)
     }
 
+    rule(:field_missing_as) {
+      field_raw >> space >> field_alias
+    }
+
     rule(:field_as) {
-      match(/\w+/).named(:field) >>
-       space >>
-       str("as") >>
-       space >>
-       match(/\w+/).named(:alias)
+      field_raw >>
+        space >>
+        str("as") >>
+        space >>
+        field_alias
     }
 
     rule(:field_eq) {
-      match(/\w+/).named(:alias) >>
+      field_alias >>
         space >>
         str("=") >>
         space >>
-        match(/\w+/).named(:field)
+        field_raw
     }
 
     rule(:field) {
-      (field_eq | field_as | field_raw).named(:column)
+      (field_eq | field_as | field_missing_as | field_raw).named(:column)
     }
 
     rule(:fields) {
@@ -52,7 +60,7 @@ module Sql::Crystallizer
       SimpleColumn.new(name)
     end
 
-    def alias(name : String)
+    def aliased(name : String)
       AliasedColumn.new("", name)
     end
   end
@@ -65,7 +73,7 @@ module Sql::Crystallizer
       SimpleColumn.new(name)
     end
 
-    def alias(name : String)
+    def aliased(name : String)
       AliasedColumn.new(@name, name)
     end
 
@@ -82,7 +90,7 @@ module Sql::Crystallizer
       AliasedColumn.new(name, @alias)
     end
 
-    def alias(name : String)
+    def aliased(name : String)
       AliasedColumn.new(@name, name)
     end
 
@@ -111,7 +119,7 @@ module Sql::Crystallizer
     }
 
     enter(:alias) {
-      visitor.current_column = visitor.current_column.alias(node.full_value)
+      visitor.current_column = visitor.current_column.aliased(node.full_value)
     }
 
     exit(:column) {
