@@ -6,7 +6,7 @@ module Sql::Crystallizer
       ast = QueryParser.new.parse(source)
       visitor = PlainStringVisitor.new
       visitor.visit(ast)
-      visitor.rslt.to_str.should eq target
+      visitor.to_s.should eq target
     end
   end
 
@@ -22,10 +22,6 @@ module Sql::Crystallizer
 
       it "with AS" do
         Assert.transform("select 1 as test", "select 1 as test")
-      end
-
-      it "with (=) equal" do
-        Assert.transform("select test = 1", "select 1 as test")
       end
 
       it "on multiple lines" do

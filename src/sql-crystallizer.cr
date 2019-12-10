@@ -8,7 +8,7 @@ module Sql::Crystallizer
       match(/select/i) >>
         space >>
         (set_quantifier >> space).maybe >>
-        select_list >>
+        select_list.named(:select_list) >>
         (space >> table_expression).maybe
     end
 
@@ -27,11 +27,20 @@ module Sql::Crystallizer
     end
 
     rule(:derived_column) do
-      identifier >> (space >> as_clause).maybe
+      value_expression.named(:derived_column) >> (space >> as_clause).maybe
     end
 
     rule(:as_clause) do
-      (match(/as/i) >> space).maybe >> identifier
+      (match(/as/i) >> space).maybe >> identifier.named(:as_clause)
+    end
+
+    rule(:value_expression) do
+      # common_value_expression | boolean_value_expression | row_value_expression
+      function | identifier
+    end
+
+    rule(:function) do
+      identifier >> str("(") >> value_expression.maybe >> str(")")
     end
 
     rule(:table_expression) do
@@ -47,76 +56,32 @@ module Sql::Crystallizer
     root(:query_specification)
   end
 
-  struct NilColumn
-    def named(name : String)
-      SimpleColumn.new(name)
-    end
-
-    def aliased(name : String)
-      AliasedColumn.new("", name)
-    end
-  end
-
-  struct SimpleColumn
-    def initialize(@name : String)
-    end
-
-    def named(name : String)
-      SimpleColumn.new(name)
-    end
-
-    def aliased(name : String)
-      AliasedColumn.new(@name, name)
-    end
-
-    def to_s
-      @name
-    end
-  end
-
-  struct AliasedColumn
-    def initialize(@name : String, @alias : String)
-    end
-
-    def named(name : String)
-      AliasedColumn.new(name, @alias)
-    end
-
-    def aliased(name : String)
-      AliasedColumn.new(@name, name)
-    end
-
-    def to_s
-      "#{@name} as #{@alias}"
-    end
-  end
-
-  alias Column = (NilColumn | SimpleColumn | AliasedColumn)
-
-  class Query
-    property columns = [] of Column
-
-    def to_str
-      "select " + columns.map(&.to_s).join(", ")
-    end
-  end
-
   class PlainStringVisitor < Lingo::Visitor
-    EMPTY_COLUMN = NilColumn.new
-    getter rslt = Query.new
-    property current_column : Column = EMPTY_COLUMN
+    getter builder = String::Builder.new(2048)
+    property fields = [] of String
 
-    enter(:field) do
-      visitor.current_column = visitor.current_column.named(node.full_value)
+    enter(:select_list) do
+      visitor.fields = [] of String
+
+      visitor.builder.print("select")
+      visitor.builder.print(" ")
     end
 
-    enter(:alias) do
-      visitor.current_column = visitor.current_column.aliased(node.full_value)
+    exit(:select_list) do
+      fields = visitor.fields
+      visitor.builder.print(fields.join(", "))
     end
 
-    exit(:column) do
-      visitor.rslt.columns << visitor.current_column
-      visitor.current_column = EMPTY_COLUMN
+    enter(:derived_column) do
+      visitor.fields << node.full_value
+    end
+
+    enter(:as_clause) do
+      visitor.fields[-1] = visitor.fields[-1] + " as #{node.full_value}"
+    end
+
+    def to_s
+      builder.to_s
     end
   end
 end
