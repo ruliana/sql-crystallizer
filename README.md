@@ -25,3 +25,8 @@ TODO: Write development instructions here
 ## Contributors
 
 - [Ronie Uliana](https://github.com/your-github-user) - creator and maintainer
+
+## References
+
+- https://ronsavage.github.io/SQL/sql-2003-2.bnf.html
+- http://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf
