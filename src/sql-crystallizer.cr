@@ -36,8 +36,38 @@ module Sql::Crystallizer
 
     rule(:value_expression) do
       # common_value_expression | boolean_value_expression | row_value_expression
-      function | identifier
+      boolean_value_expression | function | identifier
     end
+
+    rule(:boolean_value_expression) do
+      boolean_term | (boolean_value_expression >> space >> match(/or/i) >> space >> boolean_term)
+    end
+
+    rule(:boolean_term) do
+      boolean_factor | (boolean_term >> space >> match(/and/i) >> space >> boolean_factor)
+    end
+
+    rule(:boolean_factor) do
+      (match(/not/i) >> space).maybe >> boolean_test
+    end
+
+    rule(:boolean_test) do
+      boolean_primary >> (space >> match(/is/i) >> (space >> match(/not/i)).maybe >> space >> truth_value).maybe
+    end
+
+    rule(:truth_value) do
+      match(/true/i) | match(/false/i) | match(/unknown/i)
+    end
+
+    rule(:boolean_primary) do
+      predicate | boolean_predicand
+    end
+
+    rule(:boolean_predicand) do
+      parenthesized_boolean_value_expression | nonparenthesized_value_expression
+    end
+
+    rule(:parenthesized_boolean_value_expression)
 
     rule(:function) do
       identifier >> str("(") >> value_expression.maybe >> str(")")
