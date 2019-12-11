@@ -206,17 +206,17 @@ module Sql::Crystallizer
     end
 
     def layout(builder)
-      doc = @doc
+      inner_doc = @doc
 
-      case doc
+      case inner_doc
       when Concat
-        (Nest.new(@spaces, doc.a) + Nest.new(@spaces, doc.b)).layout(builder)
+        (Nest.new(spaces, inner_doc.a) + Nest.new(spaces, inner_doc.b)).layout(builder)
       when Line
-        (doc + Text.new(" " * @spaces)).layout(builder)
+        (inner_doc + Text.new(" " * spaces)).layout(builder)
       when Nest
-        Nest.new(doc.spaces + @spaces, doc.doc).layout(builder)
+        Nest.new(inner_doc.spaces + spaces, inner_doc.doc).layout(builder)
       else
-        doc.layout(builder)
+        inner_doc.layout(builder)
       end
     end
   end
