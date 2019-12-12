@@ -101,14 +101,15 @@ module Sql::Crystallizer
       end
 
       it "nested layout sum indents" do
-        (Text.new("level 0") +
+        (Text.new("level 0a") +
          Nest.new(2,
                   Doc::LINE + "level 1a" +
                   Doc::LINE + "level 1b" +
                   Nest.new(2,
                            Doc::LINE + "level 2a" +
-                           Doc::LINE + "level 2b")))
-          .layout.should eq "level 0\n  level 1a\n  level 1b\n    level 2a\n    level 2b"
+                           Doc::LINE + "level 2b")) +
+         Doc::LINE + Text.new("level 0b"))
+          .layout.should eq "level 0a\n  level 1a\n  level 1b\n    level 2a\n    level 2b\nlevel 0b"
       end
 
       it "format things just nicely" do

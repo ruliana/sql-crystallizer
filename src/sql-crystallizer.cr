@@ -156,11 +156,11 @@ module Sql::Crystallizer
     NIL = Nil.new
     LINE = Line.new
 
-    abstract def layout(builder : String::Builder)
+    abstract def layout(builder : String::Builder, spaces : Int16)
 
     def layout
       builder = String::Builder.new(1024 * 8)
-      layout(builder)
+      layout(builder, 0)
       builder.to_s
     end
 
@@ -174,50 +174,34 @@ module Sql::Crystallizer
   end
 
   class Concat < Doc
-    getter a : Doc
-    getter b : Doc
-
     def initialize(@a : Doc, @b : Doc)
     end
 
-    def layout(builder)
-      @a.layout(builder)
-      @b.layout(builder)
+    def layout(builder, spaces)
+      @a.layout(builder, spaces)
+      @b.layout(builder, spaces)
     end
   end
 
   class Nil < Doc
-    def layout(builder)
+    def layout(builder, spaces)
       # Do nothing
     end
   end
 
   class Line < Doc
-    def layout(builder)
+    def layout(builder, spaces)
       builder.puts
+      spaces.times { builder.print(" ") }
     end
   end
 
   class Nest < Doc
-    getter doc : Doc
-    getter spaces : Int16
-
     def initialize(@spaces : Int16, @doc : Doc)
     end
 
-    def layout(builder)
-      inner_doc = @doc
-
-      case inner_doc
-      when Concat
-        (Nest.new(spaces, inner_doc.a) + Nest.new(spaces, inner_doc.b)).layout(builder)
-      when Line
-        (inner_doc + Text.new(" " * spaces)).layout(builder)
-      when Nest
-        Nest.new(inner_doc.spaces + spaces, inner_doc.doc).layout(builder)
-      else
-        inner_doc.layout(builder)
-      end
+    def layout(builder, spaces)
+      @doc.layout(builder, spaces + @spaces)
     end
   end
 
@@ -226,7 +210,7 @@ module Sql::Crystallizer
       @thing = thing
     end
 
-    def layout(builder)
+    def layout(builder, spaces)
       builder.print(@thing)
     end
   end
